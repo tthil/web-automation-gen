@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Automation Tool</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Web Automation Tool</h1>
+        </header>
+        
+        <section class="session-recording">
+            <h2>Record Session</h2>
+            <div class="input-group">
+                <input type="text" id="urlInput" placeholder="Enter URL to automate...">
+                <button id="startSessionBtn" class="btn primary">Start Session</button>
+                <button id="saveSessionBtn" class="btn secondary" disabled>Save Session</button>
+            </div>
+        </section>
+        
+        <section class="session-list">
+            <h2>Saved Sessions</h2>
+            <div class="sessions-container" id="sessionsList">
+                <!-- Sessions will be populated here dynamically -->
+                <div class="no-sessions">No sessions available</div>
+            </div>
+        </section>
+        
+        <section class="replay-logs">
+            <h2>Replay Logs</h2>
+            <div class="logs-container" id="replayLogs">
+                <div class="log-message">Logs will appear here during session replay</div>
+            </div>
+            <button id="stopReplayBtn" class="btn warning" disabled>Stop Replay</button>
+        </section>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
