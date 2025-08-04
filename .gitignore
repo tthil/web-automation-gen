@@ -7,10 +7,13 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 dev-debug.log
+
 # Dependency directories
 node_modules/
+
 # Environment variables
 .env
+
 # Editor directories and files
 .idea
 *.suo
@@ -18,9 +21,38 @@ node_modules/
 *.njsproj
 *.sln
 *.sw?
+
 # OS specific
 .DS_Store
 
 # Task files
 # tasks.json
-# tasks/ 
+# tasks/
+
+# Development and temporary files
+*.bak
+*.tmp
+*.temp
+
+# Session data and runtime files
+history/
+metadata/
+
+# Test directories
+tests/
+src/tests/
+
+# Development/debug server files
+src/fixedServer.ts
+src/minimalServer.ts
+src/routeDebug.ts
+src/server.fixed.ts
+src/routes/directEventHandler.ts
+src/routes/sessionRoutesFixed.ts
+
+# HTML templates/prototypes (keep main index.html)
+public/html/
+
+# Development JavaScript files (app variations)
+public/js/app-*.js
+public/js/app.js.bak 

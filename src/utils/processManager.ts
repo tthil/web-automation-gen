@@ -150,6 +150,25 @@ export class ProcessManager {
   }
   
   /**
+   * Get the type of a process (recording or replay)
+   * @param processId Process ID
+   * @returns Process type or undefined if not found
+   */
+  public getProcessType(processId: string): 'recording' | 'replay' | undefined {
+    const info = this.processes.get(processId);
+    return info ? info.type : undefined;
+  }
+  
+  /**
+   * Get the process info for a given process ID
+   * @param processId Process ID
+   * @returns ProcessInfo object or undefined if not found
+   */
+  public getProcess(processId: string): ProcessInfo | undefined {
+    return this.processes.get(processId);
+  }
+  
+  /**
    * Clean up old processes and logs
    * Removes processes that have been completed for more than 1 hour
    */

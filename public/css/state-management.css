@@ -1,0 +1,303 @@
+/**
+ * State Management CSS
+ * 
+ * Styles for state-dependent UI elements and transitions
+ */
+
+/* Session Selection States */
+.session-item.selected {
+    background-color: var(--primary-color, #007bff);
+    color: white;
+    border-left: 4px solid var(--accent-color, #28a745);
+    transform: translateX(2px);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.session-item.selected .session-name {
+    color: white;
+}
+
+.session-item.selected .session-url,
+.session-item.selected .session-meta,
+.session-item.selected .session-description {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.session-item.selected .btn {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.session-item.selected .btn:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* App Mode States */
+.app-mode-recording .session-recording {
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+}
+
+.app-mode-replaying .replay-logs {
+    background-color: #d1ecf1;
+    border-left: 4px solid #17a2b8;
+}
+
+/* Button State Transitions */
+.btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn.loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Status Indicators */
+.status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #6c757d;
+    margin-right: 8px;
+    transition: all 0.3s ease;
+}
+
+.status-indicator.active {
+    background-color: #dc3545;
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.connected {
+    background-color: #28a745;
+}
+
+.status-indicator.warning {
+    background-color: #ffc107;
+}
+
+/* Connection Status */
+.connection-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.connection-status.idle {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+.connection-status.connected {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.connection-status.disconnected {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.connection-status.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+/* Search and Filter States */
+.search-container {
+    position: relative;
+}
+
+.clear-search {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 3px;
+    display: none;
+}
+
+.clear-search:hover {
+    background-color: #f8f9fa;
+    color: #495057;
+}
+
+.clear-search.visible {
+    display: block;
+}
+
+/* Loading States */
+.loading-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: #6c757d;
+}
+
+.loading-indicator i {
+    margin-right: 8px;
+}
+
+/* Error States */
+.error-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.error-state i {
+    margin-right: 8px;
+}
+
+/* No Sessions State */
+.no-sessions {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+}
+
+.no-sessions i {
+    color: #dee2e6;
+    margin-bottom: 10px;
+}
+
+/* Animations */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Session Item Animations */
+.session-item {
+    animation: slideIn 0.3s ease-out;
+    transition: all 0.2s ease;
+}
+
+.session-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive States */
+@media (max-width: 768px) {
+    .session-item.selected {
+        transform: none;
+        border-left-width: 3px;
+    }
+    
+    .connection-status {
+        font-size: 0.8em;
+        padding: 1px 6px;
+    }
+    
+    .status-indicator {
+        width: 10px;
+        height: 10px;
+        margin-right: 6px;
+    }
+}
+
+/* Focus States for Accessibility */
+.session-item:focus-within {
+    outline: 2px solid var(--primary-color, #007bff);
+    outline-offset: 2px;
+}
+
+.btn:focus {
+    outline: 2px solid var(--primary-color, #007bff);
+    outline-offset: 2px;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .session-item.selected {
+        border-left-width: 6px;
+        background-color: #000;
+        color: #fff;
+    }
+    
+    .connection-status.connected {
+        background-color: #000;
+        color: #0f0;
+        border-color: #0f0;
+    }
+    
+    .connection-status.disconnected {
+        background-color: #000;
+        color: #f00;
+        border-color: #f00;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .btn,
+    .session-item,
+    .status-indicator,
+    .connection-status {
+        transition: none;
+        animation: none;
+    }
+    
+    .status-indicator.active {
+        animation: none;
+    }
+}

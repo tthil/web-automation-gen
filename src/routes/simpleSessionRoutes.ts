@@ -1,4 +1,5 @@
 import express from 'express';
+import { Request, Response } from 'express';
 import { 
   getAllSessions, 
   createSession, 
@@ -14,39 +15,42 @@ import { addConnectionEvent, completeSession } from '../services/sessionService'
 
 const router = express.Router();
 
-// GET all sessions
-router.get('/', getAllSessions);
-
-// POST create a new session
-router.post('/', createSession);
-
-// Debug endpoint to confirm router is working
-router.get('/debug', (req, res) => {
-  res.status(200).json({ message: 'Session router debug endpoint is working' });
+// Middleware to log all requests to this router
+router.use((req: Request, res: Response, next) => {
+  console.log(`Session Router: ${req.method} ${req.originalUrl} (params: ${JSON.stringify(req.params)})`);
+  next();
 });
 
-// GET all historical metrics (all periods) - must be before /:id pattern routes
+// Base routes - no params
+router.get('/', getAllSessions);
+router.post('/', createSession);
+
+// Specific path routes - must be before /:id routes
 router.get('/metrics/history', getAllHistoricalMetrics);
-
-// GET historical metrics for a specific period - must be before /:id pattern routes
 router.get('/metrics/history/:period', getHistoricalMetricsForPeriod);
-
-// PUT acknowledge/dismiss an alert - must be before /:id pattern routes
 router.put('/alerts/:alertId', dismissAlert);
 
-// GET specific session by ID
+// Debug endpoint for testing
+router.get('/debug', (req: Request, res: Response) => {
+  res.json({ message: 'Debug endpoint works' });
+});
+
+// ===== Session ID routes =====
+// GET session by ID
 router.get('/:id', getSessionById);
 
-// DELETE a session
+// DELETE session
 router.delete('/:id', deleteSession);
 
 // POST replay a session
 router.post('/:id/replay', replaySession);
 
 // PUT complete a session
-router.put('/:id/complete', async (req, res) => {
+router.put('/:id/complete', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id;
+    console.log(`Complete session endpoint hit for ID: ${id}`);
+    
     const session = await completeSession(id);
     
     if (!session) {
@@ -58,17 +62,19 @@ router.put('/:id/complete', async (req, res) => {
       session
     });
   } catch (error) {
+    console.error('Error completing session:', error);
     res.status(500).json({ message: 'Error completing session', error });
   }
 });
 
-
-// POST add a connection event to a session
-// NOTE: This is the fixed route that was causing 404 errors
-router.post('/:id/events', async (req, res) => {
+// ==== THE PROBLEMATIC ENDPOINT ====
+// POST add event to session
+router.post('/:id/events', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params as { id: string };
-    console.log(`ROUTE HIT: Adding event to session ${id}:`, req.body);
+    const id = req.params.id;
+    console.log(`🔔 EVENTS ENDPOINT HIT FOR SESSION ${id}`);
+    console.log(`Request body:`, req.body);
+    
     const { type, details, duration, latency, qualityIndicator } = req.body;
     
     // Validate required fields
@@ -89,20 +95,21 @@ router.post('/:id/events', async (req, res) => {
       return res.status(404).json({ message: `Session with ID ${id} not found` });
     }
     
+    console.log(`✅ Event added successfully to session ${id}`);
     res.status(200).json({ 
       message: `${type} event added to session`,
       session: updatedSession
     });
   } catch (error) {
-    console.error('Error in event handler:', error);
+    console.error('Error adding event to session:', error);
     res.status(500).json({ message: 'Error adding connection event', error });
   }
 });
 
-// GET session connection metrics (using existing session data)
+// GET session metrics
 router.get('/:id/metrics', getSessionById);
 
 // GET session alerts
 router.get('/:id/alerts', getAlertsForSession);
 
-export const sessionRoutes = router;
+export const simpleSessionRoutes = router;

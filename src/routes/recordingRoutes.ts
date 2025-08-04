@@ -3,6 +3,9 @@ import {
   startRecording,
   stopRecording,
   getLogs,
+  getRecordingStatus,
+  recordConnectionEvent,
+  recoverSession,
 } from '../controllers/recordingController';
 
 const router = express.Router();
@@ -15,5 +18,14 @@ router.post('/stop/:pid', stopRecording);
 
 // GET logs for a running process
 router.get('/logs/:pid', getLogs);
+
+// GET status of a recording process
+router.get('/status/:pid', getRecordingStatus);
+
+// POST record a connection event for a session
+router.post('/connection-event/:processId', recordConnectionEvent);
+
+// GET recover a session by process ID
+router.get('/recover/:processId', recoverSession);
 
 export const recordingRoutes = router;

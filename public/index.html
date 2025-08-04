@@ -3,41 +3,430 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Automation Tool</title>
+    <meta name="description" content="Web Automation Tool for recording and replaying browser sessions">
+    <title>Web Booster | Web Automation Tool</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/connection-metrics.css">
+    <link rel="stylesheet" href="css/session-list.css">
+    <link rel="stylesheet" href="css/replay-logs.css">
+    <link rel="stylesheet" href="css/state-management.css">
+    <!-- External Libraries -->    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <title>Web Booster - Automation</title>
+    <!-- Chart.js for metrics visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <!-- Accessibility improvements -->
+    <script>
+        // This helps screen readers announce dynamic content changes
+        window.addEventListener('DOMContentLoaded', () => {
+            if ('applicationCache' in window) {
+                const statusMessageElement = document.createElement('div');
+                statusMessageElement.setAttribute('aria-live', 'polite');
+                statusMessageElement.setAttribute('aria-atomic', 'true');
+                statusMessageElement.className = 'sr-only';
+                document.body.appendChild(statusMessageElement);
+                window.announceToScreenReader = (message) => {
+                    statusMessageElement.textContent = message;
+                };
+            }
+        });
+    </script>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Web Automation Tool</h1>
+            <h1><i class="fas fa-bolt"></i> Web Booster</h1>
         </header>
         
         <section class="session-recording">
-            <h2>Record Session</h2>
-            <div class="input-group">
-                <input type="text" id="urlInput" placeholder="Enter URL to automate...">
-                <button id="startSessionBtn" class="btn primary">Start Session</button>
-                <button id="saveSessionBtn" class="btn secondary" disabled>Save Session</button>
+            <h2><i class="fas fa-record-vinyl"></i> Record Session</h2>
+            <div class="status-bar">
+                <div class="recording-status">
+                    <span class="status-indicator" id="recordingStatus"></span>
+                    <span id="statusText">Ready</span>
+                </div>
+                <div class="connection-info">
+                    <span class="connection-status idle" id="connectionStatus">Not recording</span>
+                    <button id="reconnectBtn" class="btn micro" style="display: none;"><i class="fas fa-sync"></i> Reconnect</button>
+                </div>
+            </div>
+            
+            <div class="input-group url-input">
+                <input type="text" id="urlInput" placeholder="Enter URL to automate (e.g., https://example.com)">
+                <button id="startSessionBtn" class="btn primary">
+                    <i class="fas fa-play btn-icon"></i> Start Session
+                </button>
+                <button id="saveSessionBtn" class="btn secondary" disabled>
+                    <i class="fas fa-save btn-icon"></i> Save
+                </button>
             </div>
         </section>
         
         <section class="session-list">
-            <h2>Saved Sessions</h2>
+            <h2><i class="fas fa-list"></i> Saved Sessions</h2>
+            <div class="session-filter">
+                <label for="categoryFilter" class="sr-only">Filter by category</label>
+                <select id="categoryFilter" aria-label="Filter sessions by category">
+                    <option value="all">All Categories</option>
+                    <option value="">Uncategorized</option>
+                    <!-- Categories will be populated dynamically -->
+                </select>
+                <label for="sessionSearch" class="sr-only">Search sessions</label>
+                <div class="search-container">
+                    <input type="text" id="sessionSearch" placeholder="Search sessions..." aria-label="Search sessions">
+                    <button id="clearSearchBtn" class="clear-search" aria-label="Clear search">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <button id="sortSessionsBtn" class="btn secondary" aria-label="Toggle sort order">
+                    <i class="fas fa-sort-alpha-down"></i>
+                </button>
+            </div>
             <div class="sessions-container" id="sessionsList">
                 <!-- Sessions will be populated here dynamically -->
-                <div class="no-sessions">No sessions available</div>
+                <div class="no-sessions">
+                    <i class="fas fa-folder-open fa-2x" style="margin-bottom: 10px;"></i><br>
+                    No sessions available
+                </div>
             </div>
         </section>
         
         <section class="replay-logs">
-            <h2>Replay Logs</h2>
-            <div class="logs-container" id="replayLogs">
-                <div class="log-message">Logs will appear here during session replay</div>
+            <div class="logs-header">
+                <h2><i class="fas fa-terminal"></i> Replay Logs</h2>
+                <div class="logs-actions">
+                    <!-- Filter controls will be added here by JavaScript -->
+                    <button id="clearLogsBtn" class="btn secondary">
+                        <i class="fas fa-eraser"></i> Clear
+                    </button>
+                </div>
             </div>
-            <button id="stopReplayBtn" class="btn warning" disabled>Stop Replay</button>
+            
+            <div class="logs-container" id="replayLogs">
+                <div class="log-message info">
+                    <span class="log-timestamp">[00:00:00]</span>
+                    <span class="log-source">[System]</span>
+                    <i class="fas fa-info-circle log-icon info"></i>
+                    <span class="log-content">Ready to record or replay sessions</span>
+                </div>
+            </div>
+            
+            <div class="replay-controls">
+                <!-- Play/pause and restart buttons will be added here by JavaScript -->
+                <button id="stopReplayBtn" class="btn warning" disabled>
+                    <i class="fas fa-stop btn-icon"></i> Stop Replay
+                </button>
+            </div>
         </section>
     </div>
 
+    <!-- Modal for naming a new session -->
+    <div id="nameSessionModal" class="modal" aria-labelledby="nameSessionTitle" aria-describedby="nameSessionDescription" aria-hidden="true" role="dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="nameSessionTitle">Name Your Session</h3>
+                <button class="close-button" aria-label="Close" id="closeNameModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="nameSessionDescription">Give your recorded session a name and optional category for better organization.</p>
+                <div class="form-group">
+                    <label for="sessionName">Session Name<span class="required">*</span>:</label>
+                    <input type="text" id="sessionName" placeholder="Enter a descriptive name" required aria-required="true">
+                </div>
+                <div class="form-group">
+                    <label for="sessionCategory">Category:</label>
+                    <select id="sessionCategory" aria-label="Session category">
+                        <option value="">None</option>
+                        <option value="login">Login Flows</option>
+                        <option value="checkout">Checkout Flows</option>
+                        <option value="registration">Registration</option>
+                        <option value="search">Search</option>
+                        <option value="custom">Custom...</option>
+                    </select>
+                </div>
+                <div id="customCategoryContainer" class="form-group hidden">
+                    <label for="customCategory">Custom Category:</label>
+                    <input type="text" id="customCategory" placeholder="Enter custom category name">
+                </div>
+                <div class="form-group">
+                    <label for="sessionDescription">Description:</label>
+                    <textarea id="sessionDescription" placeholder="Optional description of what this session does" rows="3" aria-label="Session description"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" id="cancelNameSession">Cancel</button>
+                <button class="btn primary" id="saveNameSession">Save Session</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for renaming a session -->
+    <div id="renameSessionModal" class="modal" aria-labelledby="renameSessionTitle" aria-describedby="renameSessionDescription" aria-hidden="true" role="dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="renameSessionTitle">Rename Session</h3>
+                <button class="close-button" aria-label="Close" id="closeRenameModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="renameSessionDescription">Update this session's name, category, or description.</p>
+                <div class="form-group">
+                    <label for="editSessionName">Session Name<span class="required">*</span>:</label>
+                    <input type="text" id="editSessionName" placeholder="Enter a descriptive name" required aria-required="true">
+                </div>
+                <div class="form-group">
+                    <label for="editSessionCategory">Category:</label>
+                    <select id="editSessionCategory" aria-label="Session category">
+                        <option value="">None</option>
+                        <option value="login">Login Flows</option>
+                        <option value="checkout">Checkout Flows</option>
+                        <option value="registration">Registration</option>
+                        <option value="search">Search</option>
+                        <option value="custom">Custom...</option>
+                    </select>
+                </div>
+                <div id="editCustomCategoryContainer" class="form-group hidden">
+                    <label for="editCustomCategory">Custom Category:</label>
+                    <input type="text" id="editCustomCategory" placeholder="Enter custom category name">
+                </div>
+                <div class="form-group">
+                    <label for="editSessionDescription">Description:</label>
+                    <textarea id="editSessionDescription" placeholder="Optional description of what this session does" rows="3" aria-label="Session description"></textarea>
+                </div>
+                <input type="hidden" id="editSessionId">
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" id="cancelRenameSession">Cancel</button>
+                <button class="btn primary" id="saveRenameSession">Update Session</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for viewing connection metrics and event history -->
+    <div id="connectionMetricsModal" class="modal" aria-labelledby="connectionMetricsTitle" aria-describedby="connectionMetricsDescription" aria-hidden="true" role="dialog">
+        <div class="modal-content modal-wide">
+            <div class="modal-header">
+                <h3 id="connectionMetricsTitle">Session Connection Metrics</h3>
+                <button class="close-button" aria-label="Close" id="closeConnectionMetricsModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="connectionQualityChartContainer" class="chart-container">
+                    <canvas id="connectionQualityChart"></canvas>
+                </div>
+                <div class="chart-container historical-chart-container">
+                    <h3>Historical Connection Quality</h3>
+                    <div class="chart-period-selector">
+                        <button class="chart-period active" data-period="day">Day</button>
+                        <button class="chart-period" data-period="week">Week</button>
+                        <button class="chart-period" data-period="month">Month</button>
+                        <button class="chart-period" data-period="all">All</button>
+                    </div>
+                    <canvas id="historicalQualityChart"></canvas>
+                </div>
+                <div id="connectionMetricsContent">
+                    <div class="metrics-group" id="connectionQualityScore">
+                        <h3>Connection Quality</h3>
+                        <div class="quality-score-value">--</div>
+                        <div class="quality-score-label">--</div>
+                    </div>
+                    <div class="metrics-summary">
+                        <h4>Connection Summary</h4>
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-value" id="disconnectionCount">0</div>
+                                <div class="metric-label">Disconnections</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="reconnectionCount">0</div>
+                                <div class="metric-label">Reconnections</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="totalDowntime">0s</div>
+                                <div class="metric-label">Total Downtime</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="connectionQuality">-</div>
+                                <div class="metric-label">Quality Score</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="connectionStatus">Unknown</div>
+                                <div class="metric-label">Session Status</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" id="closeConnectionMetricsBtn">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast container for notifications -->
+    <div id="toastContainer" aria-live="polite" class="toast-container"></div>
+    
+    <!-- App scripts -->
+    <script src="js/url-input-control.js"></script>
+    <script src="js/session-list.js"></script>
     <script src="js/app.js"></script>
+    <script src="js/connection-metrics.js"></script>
+    <script src="js/connection-charts.js"></script>
+    <script src="js/dashboard-integration.js"></script>
+    <script src="js/connection-alerts.js"></script>
+    <script src="js/historical-analysis.js"></script>
+    <script src="js/connection-settings.js"></script>
+    <script>
+        // Initialize all connection modules when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize connection alerts system
+            if (window.connectionAlerts && window.connectionAlerts.initialize) {
+                window.connectionAlerts.initialize();
+            }
+            
+            // Initialize historical analysis
+            if (window.connectionHistory && window.connectionHistory.initialize) {
+                window.connectionHistory.initialize();
+            }
+            
+            // Initialize connection settings
+            if (window.connectionSettings && window.connectionSettings.initialize) {
+                window.connectionSettings.initialize();
+            }
+            
+            // Setup historical chart period selector
+            document.querySelectorAll('.chart-period').forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove active class from all buttons
+                    document.querySelectorAll('.chart-period').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    
+                    // Get period from data attribute
+                    const period = this.dataset.period;
+                    
+                    // Update chart
+                    if (window.connectionHistory && window.connectionHistory.createHistoricalChart) {
+                        window.connectionHistory.createHistoricalChart('historicalQualityChart', period);
+                    }
+                });
+            });
+            
+            // Create dashboard alert section
+            const dashboardContainer = document.getElementById('dashboardContainer');
+            if (dashboardContainer) {
+                const alertsSection = document.createElement('div');
+                alertsSection.id = 'dashboardAlertsSection';
+                alertsSection.className = 'dashboard-section';
+                alertsSection.innerHTML = `
+                    <h3>Connection Alerts <span id="connectionDashboardAlerts" class="alert-badge">0</span></h3>
+                    <div id="alertsList" class="alerts-list">
+                        <p class="no-alerts">No active alerts</p>
+                    </div>
+                `;
+                
+                dashboardContainer.appendChild(alertsSection);
+                
+                // Subscribe to alerts
+                if (window.connectionAlerts && window.connectionAlerts.subscribeToAlerts) {
+                    window.connectionAlerts.subscribeToAlerts(function(eventType, alert) {
+                        updateAlertsList();
+                    });
+                }
+            }
+            
+            // Function to update alerts list
+            function updateAlertsList() {
+                const alertsList = document.getElementById('alertsList');
+                if (!alertsList || !window.connectionAlerts) return;
+                
+                // Get active alerts
+                const alerts = window.connectionAlerts.getActiveAlerts();
+                
+                // Clear list
+                alertsList.innerHTML = '';
+                
+                if (alerts.length === 0) {
+                    alertsList.innerHTML = '<p class="no-alerts">No active alerts</p>';
+                    return;
+                }
+                
+                // Sort alerts by timestamp (newest first)
+                alerts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                // Add alerts to list
+                alerts.forEach(alert => {
+                    if (alert.acknowledged) return;
+                    
+                    const alertItem = document.createElement('div');
+                    alertItem.className = `alert-item ${alert.level.name}`;
+                    alertItem.innerHTML = `
+                        <div class="alert-header">
+                            <span class="alert-title">
+                                <i class="fas fa-${alert.level.icon}"></i> 
+                                ${alert.title}
+                            </span>
+                            <span class="alert-time">${formatRelativeTime(alert.timestamp)}</span>
+                        </div>
+                        <p class="alert-message">${alert.message}</p>
+                        <div class="alert-actions">
+                            <button class="btn btn-sm btn-outline-secondary view-session-btn" data-session-id="${alert.sessionId}">View Session</button>
+                            <button class="btn btn-sm btn-outline-primary dismiss-alert-btn" data-alert-id="${alert.id}">Dismiss</button>
+                        </div>
+                    `;
+                    
+                    alertsList.appendChild(alertItem);
+                    
+                    // Add event listeners
+                    alertItem.querySelector('.view-session-btn').addEventListener('click', function() {
+                        if (typeof openConnectionMetrics === 'function') {
+                            openConnectionMetrics(alert.sessionId);
+                        }
+                    });
+                    
+                    alertItem.querySelector('.dismiss-alert-btn').addEventListener('click', function() {
+                        if (window.connectionAlerts && window.connectionAlerts.dismissAlert) {
+                            window.connectionAlerts.dismissAlert(alert.id);
+                            updateAlertsList();
+                        }
+                    });
+                });
+            }
+            
+            // Format relative time
+            function formatRelativeTime(timestamp) {
+                const date = new Date(timestamp);
+                const now = new Date();
+                const diffMs = now - date;
+                
+                if (diffMs < 60000) { // Less than 1 minute
+                    return 'Just now';
+                } else if (diffMs < 3600000) { // Less than 1 hour
+                    const mins = Math.floor(diffMs / 60000);
+                    return `${mins} min${mins > 1 ? 's' : ''} ago`;
+                } else if (diffMs < 86400000) { // Less than 1 day
+                    const hours = Math.floor(diffMs / 3600000);
+                    return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+                } else {
+                    return date.toLocaleDateString();
+                }
+            }
+            
+            // Initial update of alerts list
+            setTimeout(updateAlertsList, 1000);
+        });
+    </script>
+    
+    <!-- State Management System -->
+    <script src="js/state-manager.js"></script>
+    <script src="js/component-integration.js"></script>
+    <script src="js/state-integration-test.js"></script>
+    
+    <!-- Replay Controls Module -->
+    <script src="js/replay-controls.js"></script>
+    <script src="js/replay-integration.js"></script>
 </body>
 </html>
